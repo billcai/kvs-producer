@@ -1,0 +1,19 @@
+version: '3.0'
+
+services:
+  rtsp_streaming:
+    image: kvs-producer:amazonlinux_rtsp
+    build:
+      context: ../amazonlinux
+      dockerfile: Dockerfile_rtsp
+    environment:
+      - RTSP_STREAM_URL=<FILL IN>
+      - KVS_STREAM_NAME=<FILL IN>
+      - VIDEO_FORMAT=<FILL IN>
+      - AWS_DEFAULT_REGION=ap-southeast-1
+      - AWS_ACCESS_KEY_ID=<OPTIONAL>
+      - AWS_SECRET_ACCESS_KEY=<OPTIONAL>
+    logging:
+      options:
+        max-size: "50m"
+        max-file: "3"

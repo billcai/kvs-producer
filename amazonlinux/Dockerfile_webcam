@@ -1,0 +1,55 @@
+# Build docker with
+# docker build -t kinesis-video-producer-sdk-cpp-amazon-linux .
+#
+FROM amazonlinux:2
+RUN yum update -y && \
+	yum upgrade -y && \
+	yum install -y autoconf && \
+	yum install -y automake && \
+	yum install -y bison && \
+	yum install -y bzip2 && \
+	yum install -y cmake && \
+	yum install -y curl && \
+	yum install -y diffutils && \
+	yum install -y flex  && \
+	yum install -y gcc  && \
+	yum install -y gcc-c++ && \
+	yum install -y git && \
+	yum install -y gmp-devel && \
+	yum install -y libffi && \
+	yum install -y libffi-devel && \
+	yum install -y libmpc-devel && \
+	yum install -y libtool && \
+	yum install -y m4 && \
+	yum install -y mpfr-devel && \
+	yum install -y pkgconfig && \
+	yum install -y vim && \
+	yum install -y wget && \
+	yum install -y make && \
+	yum install -y xz
+
+
+RUN wget https://cmake.org/files/v3.2/cmake-3.2.3-Linux-x86_64.tar.gz && \
+    tar -zxvf cmake-3.2.3-Linux-x86_64.tar.gz && \
+    rm cmake-3.2.3-Linux-x86_64.tar.gz
+ENV PATH=/cmake-3.2.3-Linux-x86_64/bin/:$PATH
+WORKDIR /opt/
+
+RUN git clone https://github.com/billcai/amazon-kinesis-video-streams-producer-sdk-cpp.git
+
+WORKDIR /opt/amazon-kinesis-video-streams-producer-sdk-cpp/kinesis-video-native-build/
+
+RUN chmod a+x ./install-script
+# ================  Build producer sdk and gstreamer plugin ================================================
+#
+RUN chmod +x install-script
+RUN ./install-script -j 4 -d
+
+# Set environment variables for plugin and libraries
+ENV LD_LIBRARY_PATH=/opt/amazon-kinesis-video-streams-producer-sdk-cpp/kinesis-video-native-build/downloads/local/lib:$LD_LIBRARY_PATH
+ENV GST_PLUGIN_PATH=/opt/amazon-kinesis-video-streams-producer-sdk-cpp/kinesis-video-native-build/downloads/local/lib
+ENV PATH=/opt/amazon-kinesis-video-streams-producer-sdk-cpp/kinesis-video-native-build/downloads/local/bin:/opt/amazon-kinesis-video-streams-producer-sdk-cpp/kinesis-video-native-build:$PATH
+
+WORKDIR /opt/amazon-kinesis-video-streams-producer-sdk-cpp/kinesis-video-native-build/
+RUN chmod +x kinesis_video_gstreamer_sample_app
+CMD ["sh","-c","gst-launch-1.0 -v v4l2src device=${DEVICE_LOCATION} ! videoconvert ! video/x-raw,format=I420,width=640,height=480,framerate=30/1 ! x264enc  bframes=0 key-int-max=45 bitrate=500 tune=zerolatency ! video/x-h264,stream-format=avc,alignment=au ! kvssink stream-name=${KVS_STREAM_NAME} storage-size=128 access-key=$AWS_ACCESS_KEY_ID secret-key=$AWS_SECRET_ACCESS_KEY"]

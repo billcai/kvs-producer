@@ -1,0 +1,22 @@
+version: '3.0'
+
+services:
+  rtsp_streaming:
+    image: kvs-producer:amazonlinux_webcam
+    build:
+      context: ../amazonlinux
+      dockerfile: Dockerfile_webcam
+    environment:
+      - DEVICE_LOCATION=<FILL IN>
+      - KVS_STREAM_NAME=<FILL IN>
+      - AWS_DEFAULT_REGION=ap-southeast-1
+      - AWS_ACCESS_KEY_ID=<OPTIONAL>
+      - AWS_SECRET_ACCESS_KEY=<OPTIONAL>
+    stdin_open: true
+    tty: true
+    devices:
+      - <DEVICE_LOCATION>:<DEVICE_LOCATION>
+    logging:
+      options:
+        max-size: "50m"
+        max-file: "3"
